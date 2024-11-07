@@ -1,11 +1,12 @@
 import pandas as pd
 
-
-def get_model_information(model):
+def get_model_information(model, txt_file):
 
     # Get and print information about the parameter number
     print()
     print("Model Summary")
+    txt_file.write("Model Summary")
+    txt_file.write("\n")
 
     # Get all parameters of the model layer by layer (trainable or not)
     model_parameters = [layer for layer in model.parameters()]
@@ -23,6 +24,8 @@ def get_model_information(model):
     max_character_number = max(character_counts)
 
     print("=" * (max_character_number + 2 + 30 + 2 + 36))
+    txt_file.write("=" * (max_character_number + 2 + 30 + 2 + 36))
+    txt_file.write("\n")
 
     # Initialize variables
     j = 0
@@ -125,11 +128,23 @@ def get_model_information(model):
 
     # Print the table of information
     print(table_information.to_string(index=False, justify="center"))
+    txt_file.write(table_information.to_string(index=False, justify="center"))
+    txt_file.write("\n")
 
     # Print the total number of trainable and non trainable parameters
     print("=" * (max_character_number + 2 + 30 + 2 + 36))
+    txt_file.write("=" * (max_character_number + 2 + 30 + 2 + 36))
+    txt_file.write("\n")
     print(f"Total")
+    txt_file.write(f"Total")
+    txt_file.write("\n")
     print(f"    Trainable Parameters: {total_trainable_params}")
+    txt_file.write(f"    Trainable Parameters: {total_trainable_params}")
+    txt_file.write("\n")
     print(f"    Non Trainable Parameters: {total_params}")
+    txt_file.write(f"    Non Trainable Parameters: {total_params}")
+    txt_file.write("\n")
     print("=" * (max_character_number + 2 + 30 + 2 + 36))
+    txt_file.write("=" * (max_character_number + 2 + 30 + 2 + 36))
     print()
+    txt_file.write("\n")

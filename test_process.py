@@ -19,10 +19,11 @@ def compute_accuracy(labels, outputs):
     return accuracy.item()
 
 
-def test_model(test_loader, model, loss_function, device, classes):
+def test_model(test_loader, model, loss_function, device, classes, txt_file):
 
     print()
     print()
+    txt_file.write('\n\n')
 
     # Initialize a DataFrame where to store metrics
     test_scores = pd.DataFrame(columns=["Loss", "Accuracy", "Balanced Accuracy", "F1-score", "Kappa",

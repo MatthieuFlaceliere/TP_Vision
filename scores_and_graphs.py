@@ -1,18 +1,39 @@
+import os
+
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, cohen_kappa_score, top_k_accuracy_score, \
-    confusion_matrix, classification_report
+
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, cohen_kappa_score, \
+    top_k_accuracy_score, confusion_matrix, classification_report
 
 import plotly.express as px
 
 
+# This function compute the accuracy for a mini-batch
+def compute_accuracy(labels, outputs):
+
+    # Transform the one-hot vectors (labels and outputs) into integers
+    labels = labels.argmax(dim=1)
+    outputs = outputs.argmax(dim=1)
+
+    # Compute the accuracy of the current mini-batch
+    corrects = (outputs == labels)
+    accuracy = corrects.sum().float() / float(labels.size(0))
+
+    return accuracy.item()
+
+
+# Transform a one hot vector into an integer (index of the maximum value)
 def vec_to_int(y_true, y_predicted):
 
+    # Transform the vector of values (one-hot and probabilities) into integers
     y_true = np.argmax(y_true, axis=1)
     y_predicted = np.argmax(y_predicted, axis=1)
 
     return y_true, y_predicted
 
+
+# This function can be used for the training and validation stage
 def model_performances(y_true, y_predicted, loss, my_score_df):
 
     # Initialize a list
@@ -34,7 +55,9 @@ def model_performances(y_true, y_predicted, loss, my_score_df):
 
     return my_score_df
 
-def show_compute_model_performances(y_true, y_predicted, loss, my_score_df, classes):
+
+# This function is only to use on the test set
+def show_compute_model_performances(y_true, y_predicted, loss, my_score_df, classes, txt_file):
 
     # Initialize a list
     scores = []
@@ -47,36 +70,53 @@ def show_compute_model_performances(y_true, y_predicted, loss, my_score_df, clas
     # Accuracy
     accuracy = accuracy_score(y_int_true, y_int_predicted)
     print("Accuracy: " + str(accuracy))
+    txt_file.write("Accuracy: " + str(accuracy))
+    txt_file.write("\n")
     scores.extend([accuracy])
     # Balanced accuracy
     balanced_accuracy = balanced_accuracy_score(y_int_true, y_int_predicted)
     print("Balanced Accuracy: " + str(balanced_accuracy))
+    txt_file.write("Balanced Accuracy: " + str(balanced_accuracy))
+    txt_file.write("\n")
     scores.extend([balanced_accuracy])
     # F1-score
     f1 = f1_score(y_int_true, y_int_predicted, average="micro")
     print("F1-score: " + str(f1))
+    txt_file.write("F1-score: " + str(f1))
+    txt_file.write("\n")
     scores.extend([f1])
     # Cohen Kappa
     kappa = cohen_kappa_score(y_int_true, y_int_predicted)
     print("Kappa: " + str(kappa))
+    txt_file.write("Kappa: " + str(kappa))
+    txt_file.write("\n")
     scores.extend([kappa])
     # Confusion matrix
     if y_true.shape[1] <= 10:
         print(confusion_matrix(y_int_true, y_int_predicted))
+        txt_file.write(str(confusion_matrix(y_int_true, y_int_predicted)))
+        txt_file.write("\n")
     # Classification report
     print(classification_report(y_int_true, y_int_predicted, target_names=classes))
+    txt_file.write(classification_report(y_int_true, y_int_predicted, target_names=classes))
+    txt_file.write("\n")
     # Top 2 accuracy
     top_2 = top_k_accuracy_score(y_int_true, y_predicted, k=2)
     print("Top 2 Accuracy: " + str(top_2))
+    txt_file.write("Top 2 Accuracy: " + str(top_2))
+    txt_file.write("\n")
     scores.extend([top_2])
     # Top 3 accuracy
     top_3 = top_k_accuracy_score(y_int_true, y_predicted, k=3)
     print("Top 3 Accuracy: " + str(top_3))
+    txt_file.write("Top 3 Accuracy: " + str(top_3))
+    txt_file.write("\n")
     scores.extend([top_3])
 
     my_score_df.loc[len(my_score_df)] = scores
 
     return my_score_df
+
 
 def create_score_df(training_epoch_scores, validation_epoch_scores, score_type):
 
@@ -104,7 +144,8 @@ def create_score_df(training_epoch_scores, validation_epoch_scores, score_type):
 
     return score_df
 
-def plot_score_graphs(training_epoch_scores, validation_epoch_scores):
+
+def plot_score_graphs(training_epoch_scores, validation_epoch_scores, results_path, my_folder_name):
 
     # List of scores to plot
     scores_to_plot = ["Loss", "Accuracy", "Balanced Accuracy", "F1-score", "Kappa", "Top 2 Accuracy", "Top 3 Accuracy"]
@@ -117,5 +158,7 @@ def plot_score_graphs(training_epoch_scores, validation_epoch_scores):
 
         # Plot the score evolution for the training and validation stages
         fig = px.line(the_df, x="Epochs", y=score_type, color="Stage")
-        # Show the graph
-        fig.show()
+        # Temporary path
+        temp_path = os.path.join(results_path, my_folder_name)
+        # Save the graph
+        fig.write_html(os.path.join(temp_path, score_type + ".html"))
