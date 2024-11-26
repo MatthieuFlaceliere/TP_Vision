@@ -6,10 +6,8 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from torch import optim
-from torch.utils.data import random_split
 
 from CNN_Architectures import CNNClassifier
-from VGG_Architectures import VGG16
 from other_tools import get_model_information
 
 from test_process import test_model
@@ -19,9 +17,9 @@ from train_process import train_model
 #                                                    USER PARAMETERS                                                   #
 ########################################################################################################################
 
-dataset_path = "/home/matthieu/data/images_dataset"
+dataset_path = "dataset"
 
-results_path = "./results"
+results_path = "./result_cnn"
 
 # Define the number of epochs of the model training
 epoch_number = 3
@@ -65,22 +63,27 @@ txt_file.write("\n")
 ########################################################################################################################
 
 """ Data Transformation """
-transform = transforms.Compose([transforms.Resize((240, 240)), transforms.ToTensor()])
-target_transform = transforms.Compose([transforms.Lambda(lambda y: torch.zeros(7, dtype=torch.float).scatter_(0, torch.tensor(y), value=1))])
+transform = transforms.Compose([
+    transforms.Resize((256,256)),
+    transforms.RandomResizedCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
+target_transform = transforms.Compose([
+    transforms.Lambda(
+        lambda y: torch.zeros(53, dtype=torch.float).scatter_(0, torch.tensor(y), value=1)
+    )
+])
 
 """" Train and validation set """
-# Load the dataset by applying transformations
-dataset = torchvision.datasets.ImageFolder(dataset_path, transform=transform, target_transform=target_transform)
-
-# Divide the dataset into a train, validation and test sets
-generator1 = torch.Generator().manual_seed(42)
-train_set, validation_set, test_set = random_split(dataset,[0.7, 0.15, 0.15], generator=generator1)
-
 # Create the Python iterator for the train set (creating mini-batches)
+train_set = torchvision.datasets.ImageFolder(dataset_path + "/train", transform=transform, target_transform=target_transform)
 train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
 # Create the Python iterator for the validation set
+validation_set = torchvision.datasets.ImageFolder(dataset_path + "/valid", transform=transform, target_transform=target_transform)
 validation_loader = torch.utils.data.DataLoader(validation_set, batch_size=batch_size, shuffle=False)
 # Create the Python iterator for the test set
+test_set = torchvision.datasets.ImageFolder(dataset_path + "/test", transform=transform, target_transform=target_transform)
 test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
 
 # Load the first batch of images from the train set
@@ -92,7 +95,7 @@ image_shape = list(images.data.shape)
 image_channel = image_shape[1]
 
 # Get the number of classes from the dataset
-classes = dataset.classes
+classes = train_set.classes
 class_number = len(list(classes))
 
 ########################################################################################################################
@@ -103,9 +106,7 @@ class_number = len(list(classes))
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Instantiate and move the model to GPU
-# model = MLPClassier(input_size=784, hidden_size=128, output_size=10).to(device)
-# model = CNNClassifier(in_channel=image_channel, output_dim=class_number).to(device)
-model = VGG16(in_channel=image_channel, output_dim=class_number).to(device)
+model = CNNClassifier(in_channel=image_channel, output_dim=class_number).to(device)
 
 # Print information about the model
 get_model_information(model, txt_file)
