@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 import os
 
@@ -13,13 +14,15 @@ from other_tools import get_model_information
 from test_process import test_model
 from train_process import train_model
 
+from torchvision import models
+
 ########################################################################################################################
 #                                                    USER PARAMETERS                                                   #
 ########################################################################################################################
 
 dataset_path = "dataset"
 
-results_path = "./result_cnn"
+results_path = "./results"
 
 # Define the number of epochs of the model training
 epoch_number = 3
@@ -30,6 +33,22 @@ batch_size = 32
 # Define the learning rate
 learning_rate = 0.01
 
+########################################################################################################################
+#                                       USER ARG                                                                       #
+########################################################################################################################
+argv = sys.argv
+model_name = None
+
+if len(argv) > 1:
+    model_name = argv[1]
+
+if not model_name or model_name not in ["CNN", "VGG"]:
+    print("Please provide a model name as an argument: CNN or VGG")
+    sys.exit(1)
+
+print(f"Model name: {model_name}")
+
+results_path = results_path + "_" + model_name
 
 ########################################################################################################################
 #                                       CREATE A FOLDER AND FILE TO SAVE RESULTS                                       #
@@ -106,7 +125,12 @@ class_number = len(list(classes))
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Instantiate and move the model to GPU
-model = CNNClassifier(in_channel=image_channel, output_dim=class_number).to(device)
+if model_name == "CNN":
+    model = CNNClassifier(in_channel=image_channel, output_dim=class_number).to(device)
+elif model_name == "VGG":
+    model = models.vgg19(weights=models.VGG19_Weights.IMAGENET1K_V1)
+    model.classifier[6] = nn.Linear(4096, class_number)
+    model = model.to(device)
 
 # Print information about the model
 get_model_information(model, txt_file)
