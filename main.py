@@ -82,12 +82,18 @@ txt_file.write("\n")
 ########################################################################################################################
 
 """ Data Transformation """
-transform = transforms.Compose([
-    transforms.Resize((256,256)),
-    transforms.RandomResizedCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+if model_name == "CNN":
+    transforms = transforms.Compose([
+        transforms.Resize((240, 240)),
+        transforms.ToTensor(),
+    ])
+elif model_name == "VGG":
+    transform = transforms.Compose([
+        transforms.Resize((256,256)),
+        transforms.RandomResizedCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 target_transform = transforms.Compose([
     transforms.Lambda(
         lambda y: torch.zeros(53, dtype=torch.float).scatter_(0, torch.tensor(y), value=1)
